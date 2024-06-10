@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Frame Searcher</title>
+	<script type="text/javascript" src="/eel.js"></script>
+	<link rel="stylesheet" href="styles/main.css">
+	<script src="scripts/main.js" defer></script>
+</head>
+<body>
+	<div class="page visible" id="page-1">
+		<h1>Analysis</h1>
+
+		<div class="file_input" id="reference_image_input" mime="images" buffer>
+			<input type="text">
+			<img src="">
+			<label class="button">Select image</label>
+			<label class="filename"></label>
+		</div>
+
+		<div class="file_input" id="video_input" mime="videos" local style="height: 100px;">
+			<input type="text" readonly>
+			<label class="button">Select video</label>
+			<label class="filename"></label>
+		</div>
+
+		<button style="width: 200px" id="search_button">Search</button>
+
+		<div id="analyze_progress">
+			<progress></progress>
+			<span>0%</span>
+		</div>
+	</div>
+
+	<div class="page" id="page-2">
+		<h1>Results</h1>
+		<div class="reference_image_wrapper">
+			<img src="" id="reference_image_result">
+		</div>
+		<h1>Select similarity degree</h1>
+		<div id="similarity_degree">
+			<input type="range" min="50" value="90" max="100"><span>90%</span>
+		</div>
+		<div id="result_area"></div>
+	</div>
+</body>
+</html>
