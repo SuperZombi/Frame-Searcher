@@ -1,82 +1,55 @@
-class CustomFileInput{
-	constructor(element) {
-		this.root = element
-		this.mime = this.root.getAttribute("mime")
-		this.input = this.root.querySelector("input")
-		this.button = this.root.querySelector("label.button")
-		this.filename = this.root.querySelector("label.filename")
-		this._onchange = _=>{}
-		this._changeFile = (name, file) =>{
-			this.root.classList.remove("invalid")
-			if (typeof file === 'string'){
-				this.input.value = file;
-			} else {
-				this.input.value = name;
-			}
-			this.filename.innerHTML = name;
-			this._onchange(file);
-		}
-
-		this.button.onclick = async _=>{
-			let file = await eel.ask_file(this.mime)();
-			if (file){
-				this._changeFile(file.replace(/^.*[\\/]/, ''), file)
-			}
-		}
-		if (!this.root.hasAttribute("local")){
-			this.root.ondragover = e=>{
-				e.preventDefault()
-				this.root.classList.add("drag-active")
-			}
-			this.root.ondragleave = _=>{
-				this.root.classList.remove("drag-active")
-			}
-			this.root.ondrop = e=>{
-				e.preventDefault();
-				this.root.classList.remove("drag-active")
-				let file = e.dataTransfer.files[0]
-				if (file){
-					this._changeFile(file.name, file)
-				}
-			}
-
-			if (this.root.hasAttribute("buffer")){
-				document.body.addEventListener("paste", e=>{
-					let clipboardData = e.clipboardData || window.clipboardData;
-					let file = clipboardData.files[0]
-					if (file){
-						this._changeFile(file.name, file)
-					}
-				});
-			}
-		}
-	}
-	onchange(func){
-		this._onchange = func
-	}
+window.onload = _=>{
+	initTabs();
+	initInputs();
 }
 
 
+function initInputs(){
+	new CustomFileInput(document.querySelector("#video_input"))
+	let image_input = new CustomFileInput(document.querySelector("#reference_image_input"))
+	image_input.onchange(async value=>{
+		function displayImage(image){
+			image_input.root.querySelector("img").src = image
+		}
 
-new CustomFileInput(document.querySelector("#video_input"))
-image_input = new CustomFileInput(document.querySelector("#reference_image_input"))
-image_input.onchange(async value=>{
-	function displayImage(image){
-		image_input.root.querySelector("img").src = image
+		if (typeof value === 'string'){
+			let image = await eel.get_file_image(value)()
+			displayImage(image)
+		} else{
+			const reader = new FileReader();
+			reader.addEventListener("load", _=>{
+				displayImage(reader.result)
+			});
+			reader.readAsDataURL(value);
+		}
+	})
+	let result_config_input = new CustomFileInput(document.querySelector("#result_file_input"))
+	result_config_input.onchange(value=>{
+		resulter(value)
+	})
+}
+
+
+function initTabs(){
+	document.querySelectorAll("#tabs .tab").forEach(tab=>{
+		tab.onclick = _=>{
+			openTab(tab.getAttribute("target"))
+		}
+	})
+}
+function openTab(tabname){
+	let target_tab = document.querySelector(`#tabs .tab[target="${tabname}"]`)
+	if (!target_tab.classList.contains("active")){
+		let old_tab = document.querySelector("#tabs .tab.active");
+		let old_content = document.querySelector("#tab-content .page.visible")
+		old_tab.classList.remove("active")
+		old_content.classList.remove("visible")
+
+		let target_page = document.querySelector(`#tab-content .page[name="${tabname}"]`)
+		target_tab.classList.add("active")
+		target_page.classList.add("visible")
 	}
-
-	if (typeof value === 'string'){
-		let image = await eel.get_file_image(value)()
-		displayImage(image)
-	} else{
-		const reader = new FileReader();
-		reader.addEventListener("load", _=>{
-			displayImage(reader.result)
-		});
-		reader.readAsDataURL(value);
-	}
-})
-
+}
 
 
 document.querySelector("#search_button").onclick = async _=>{
@@ -94,14 +67,10 @@ document.querySelector("#search_button").onclick = async _=>{
 	let image = document.querySelector("#reference_image_input img")
 	let file = await eel.analyze_video(target_video.value, image.src)()
 	resulter(file)
-
-	// resulter('result_1718017541.json')
-	
-	document.querySelector("#page-1").classList.remove("visible")
-	document.querySelector("#page-2").classList.add("visible")
 }
 
 async function resulter(config_file){
+	openTab('results')
 	document.querySelector("#similarity_degree").setAttribute("results", config_file)
 	let config = await eel.loadResults(config_file)();
 	document.querySelector("#similarity_degree").setAttribute("video", config["video"])
@@ -150,4 +119,64 @@ async function displayResults(video_file, frames){
 		el.appendChild(image)
 		document.querySelector("#result_area").appendChild(el)
     }
+}
+
+class CustomFileInput{
+	constructor(element) {
+		this.root = element
+		this.mime = this.root.getAttribute("mime")
+		this.input = this.root.querySelector("input")
+		this.button = this.root.querySelector("label.button")
+		this.filename = this.root.querySelector("label.filename")
+		this._onchange = _=>{}
+		this._changeFile = (name, file) =>{
+			this.root.classList.remove("invalid")
+			if (typeof file === 'string'){
+				this.input.value = file;
+			} else {
+				this.input.value = name;
+			}
+			this.filename.innerHTML = name;
+			this._onchange(file);
+		}
+
+		this.button.onclick = async _=>{
+			let file = await eel.ask_file(this.mime)();
+			if (file){
+				this._changeFile(file.replace(/^.*[\\/]/, ''), file)
+			}
+		}
+		if (!this.root.hasAttribute("local")){
+			this.root.ondragover = e=>{
+				e.preventDefault()
+				this.root.classList.add("drag-active")
+			}
+			this.root.ondragleave = _=>{
+				this.root.classList.remove("drag-active")
+			}
+			this.root.ondrop = e=>{
+				e.preventDefault();
+				this.root.classList.remove("drag-active")
+				let file = e.dataTransfer.files[0]
+				if (file){
+					if (file.type.startsWith(this.mime)){
+						this._changeFile(file.name, file)
+					}
+				}
+			}
+
+			if (this.root.hasAttribute("buffer")){
+				document.body.addEventListener("paste", e=>{
+					let clipboardData = e.clipboardData || window.clipboardData;
+					let file = clipboardData.files[0]
+					if (file){
+						this._changeFile(file.name, file)
+					}
+				});
+			}
+		}
+	}
+	onchange(func){
+		this._onchange = func
+	}
 }

@@ -24,10 +24,12 @@ def ask_file(filetype=""):
 	root.withdraw()
 	root.wm_attributes('-topmost', 1)
 	filetypes = [("All files", "*.*")]
-	if filetype == "images":
+	if filetype == "image":
 		filetypes.insert(0, ("Images", "*.jpg;*.png"))
-	elif filetype == "videos":
+	elif filetype == "video":
 		filetypes.insert(0, ("Videos", "*.mp4"))
+	elif filetype == "config":
+		filetypes.insert(0, ("Config file", "*.json"))
 	file = askopenfilename(parent=root, filetypes=filetypes)
 	if file: return file
 
