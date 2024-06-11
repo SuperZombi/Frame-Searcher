@@ -28,6 +28,12 @@
 		<div class="page" name="analysis">
 			<h1>Analysis</h1>
 
+			<div class="file_input" id="video_input" mime="video" local style="height: 100px;">
+				<input type="text" readonly>
+				<label class="button">Select video</label>
+				<label class="filename"></label>
+			</div>
+
 			<div class="file_input" id="reference_image_input" mime="image" buffer>
 				<input type="text">
 				<img src="">
@@ -35,10 +41,12 @@
 				<label class="filename"></label>
 			</div>
 
-			<div class="file_input" id="video_input" mime="video" local style="height: 100px;">
-				<input type="text" readonly>
-				<label class="button">Select video</label>
-				<label class="filename"></label>
+			<div class="toggle-switch" id="algorithm">
+				<input id="algorithm_1" value="fragment" type="radio" name="algorithm" checked>
+				<label for="algorithm_1" class="toggle-option">Fragment</label>
+				<input id="algorithm_2" value="fullframe" type="radio" name="algorithm">
+				<label for="algorithm_2" class="toggle-option">Full-frame</label>
+				<div class="toggle-slider"></div>
 			</div>
 
 			<button style="width: 200px" id="search_button">Search</button>

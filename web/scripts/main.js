@@ -12,7 +12,10 @@ function initInputs(){
 			image_input.root.querySelector("img").src = image
 		}
 
-		if (typeof value === 'string'){
+		if (value === null){
+			displayImage("")
+		}
+		else if (typeof value === 'string'){
 			let image = await eel.get_file_image(value)()
 			displayImage(image)
 		} else{
@@ -25,7 +28,10 @@ function initInputs(){
 	})
 	let result_config_input = new CustomFileInput(document.querySelector("#result_file_input"))
 	result_config_input.onchange(value=>{
-		resulter(value)
+		if (value){
+			result_config_input.root.clear()
+			resulter(value)
+		}
 	})
 }
 
@@ -64,13 +70,25 @@ document.querySelector("#search_button").onclick = async _=>{
 		return
 	}
 	document.querySelector("#search_button").disabled = true;
+	document.querySelector("#algorithm").classList.add("disabled")
+
 	let image = document.querySelector("#reference_image_input img")
-	let file = await eel.analyze_video(target_video.value, image.src)()
+	let algorithm = document.querySelector("input[name='algorithm']:checked").value
+	let file = await eel.analyze_video(target_video.value, image.src, algorithm)()
+
+	document.querySelector("#search_button").disabled = false;
+	document.querySelector("#algorithm").classList.remove("disabled")
+	document.querySelector("#analyze_progress progress").removeAttribute("value")
 	resulter(file)
 }
 
+function clearAnalysisFileInputs(){
+	document.querySelector("#reference_image_input").clear()
+	document.querySelector("#video_input").clear()
+}
 async function resulter(config_file){
 	openTab('results')
+	clearAnalysisFileInputs()
 	document.querySelector("#similarity_degree").setAttribute("results", config_file)
 	let config = await eel.loadResults(config_file)();
 	document.querySelector("#similarity_degree").setAttribute("video", config["video"])
@@ -96,14 +114,15 @@ document.querySelector("#similarity_degree input").oninput = _=>{
 }
 document.querySelector("#similarity_degree input").onchange = async _=>{
 	let input = document.querySelector("#similarity_degree input")
+	document.querySelector("#similarity_degree span").innerHTML = `${input.value}%`
 	document.querySelector("#result_area").innerHTML = ""
 	input.disabled = true
-
 	let target_file = document.querySelector("#similarity_degree").getAttribute("results");
-	let frames = await eel.getSimilarFrames(target_file, parseInt(input.value))()
-	let video_file = document.querySelector("#similarity_degree").getAttribute("video")
-	await displayResults(video_file, frames)
-
+	if (target_file){
+		let frames = await eel.getSimilarFrames(target_file, parseInt(input.value))()
+		let video_file = document.querySelector("#similarity_degree").getAttribute("video")
+		await displayResults(video_file, frames)
+	}
 	input.disabled = false
 }
 
@@ -176,6 +195,12 @@ class CustomFileInput{
 					}
 				});
 			}
+		}
+
+		this.root.clear = _=>{
+			this.input.value = ""
+			this.filename.innerHTML = ""
+			this._onchange(null)
 		}
 	}
 	onchange(func){

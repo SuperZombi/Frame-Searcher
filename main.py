@@ -14,8 +14,28 @@ def resource_path(relative_path):
 	base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 	return os.path.join(base_path, relative_path)
 
-def calculate_image_similarity(image1, image2):
+
+def similarity_by_fragment(image1, image2):
 	return round(uqi(image1, image2) * 100)
+
+def similarity_by_fullframe(image1, image2):
+	gray_image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+	gray_image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+	orb = cv2.ORB_create()
+	# Находим ключевые точки и дескрипторы с помощью ORB
+	keypoints1, descriptors1 = orb.detectAndCompute(gray_image1, None)
+	keypoints2, descriptors2 = orb.detectAndCompute(gray_image2, None)
+	# Используем BFMatcher для поиска ближайших соседей
+	bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+	# Сопоставляем дескрипторы
+	matches = bf.knnMatch(descriptors1, descriptors2, k=2)
+	# Применяем соотношение теста Лоу для отбора хороших совпадений
+	good_matches = []
+	for m, n in matches:
+		if m.distance < 0.85 * n.distance:
+			good_matches.append(m)
+	num_good_matches = len(good_matches)
+	return round((num_good_matches / max(len(keypoints1), len(keypoints2))) * 100)
 
 
 @eel.expose
@@ -60,7 +80,7 @@ def get_frame(video_path, frame_index):
 
 
 @eel.expose
-def analyze_video(video_path, base64_image):
+def analyze_video(video_path, base64_image, algorithm):
 	base64_string = base64_image.split(',')[1]
 	image_data = base64.b64decode(base64_string)
 	np_arr = np.frombuffer(image_data, np.uint8)
@@ -71,6 +91,11 @@ def analyze_video(video_path, base64_image):
 	height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 	length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 	reference_image = cv2.resize(reference_image, (width, height), interpolation=cv2.INTER_AREA)
+
+	if algorithm == "fragment":
+		calculate_image_similarity = similarity_by_fragment
+	else:
+		calculate_image_similarity = similarity_by_fullframe
 
 	frames_array = []
 	frame_number = 0
@@ -87,6 +112,7 @@ def analyze_video(video_path, base64_image):
 	filename = f'result_{int(time.time())}.json'
 	with open(filename, 'w', encoding='utf8') as file:
 		file.write(json.dumps({
+			'algorithm': algorithm,
 			'video': video_path,
 			'image': base64_image,
 			'frames': frames_array
@@ -100,7 +126,8 @@ def loadResults(results_file):
 		data = json.loads(file.read())
 	return {
 		"image": data['image'],
-		"video": data["video"]
+		"video": data["video"],
+		"algorithm": data.get('algorithm')
 	}
 
 @eel.expose
