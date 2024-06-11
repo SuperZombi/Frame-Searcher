@@ -167,10 +167,12 @@ class CustomFileInput{
 
 			if (this.root.hasAttribute("buffer")){
 				document.body.addEventListener("paste", e=>{
-					let clipboardData = e.clipboardData || window.clipboardData;
-					let file = clipboardData.files[0]
-					if (file){
-						this._changeFile(file.name, file)
+					if (this.root.offsetParent != null){ // visible
+						let clipboardData = e.clipboardData || window.clipboardData;
+						let file = clipboardData.files[0]
+						if (file){
+							this._changeFile(file.name, file)
+						}
 					}
 				});
 			}

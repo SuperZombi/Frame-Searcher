@@ -72,8 +72,6 @@
 }
 .file_input label.button{
 	font-size: 14pt;
-	z-index: 2;
-	transition: 0.3s;
 }
 .file_input label.filename{
 	font-size: 10pt;
@@ -89,24 +87,32 @@
 	height: 100%;
 	width: 100%;
 	object-fit: cover;
-	opacity: 0.25;
+	opacity: 1;
 	transition: 0.3s;
 }
-.file_input img:hover{
-	opacity: 1;
+.file_input:hover img{
+	opacity: 0.25;
 }
-.file_input img:hover + label.button{
+.file_input:has(img:not([src=""])) label.button,
+.file_input:has(img:not([src=""])) label.filename {
 	opacity: 0;
+}
+.file_input:hover label.button,
+.file_input:hover label.filename {
+	opacity: 1 !important;
+	z-index: 2;
+	transition: 0.3s;
 }
 .file_input img[src=""]{
 	display: none;
 }
 
 .reference_image_wrapper{
-	height: 180px;
-	width: 240px;
+	height: 160px;
+	width: 250px;
 	background: black;
 	border-radius: 12px;
+	overflow: hidden;
 }
 .reference_image_wrapper img{
 	height: 100%;
